@@ -122,7 +122,7 @@ FUNCTION {bst.cite.ands}
 
 % Author names in citations are abbreviated if the number of authors >= bst.and.others.num
 FUNCTION {bst.and.others.num}
-{ #4 }
+{ #3 }
 
 % Strings used when abbreviating multiple authors in citations
 FUNCTION {bst.and.others}
@@ -983,7 +983,7 @@ FUNCTION {compare.names.aer}
       s i.aer "{ff }{vv }{ll}{ jj}" format.name$
       =
         { #1 i.aer <
-            { " and " * }       % \bysame ‚ÅÈ—ª‚·‚é’˜ŽÒ‚Ì‘O‚É‚Â‚­ and 
+            { " and " * }       % \bysame ï¿½ï¿½È—ï¿½ï¿½ï¿½ï¿½é’˜ï¿½Ò‚Ì‘Oï¿½É‚Â‚ï¿½ and 
             { }
           if$
           "\bysame{}" *
