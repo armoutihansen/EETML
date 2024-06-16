@@ -1,1 +1,9 @@
 Analysis/Data/
+#Analysis/Python/Utils/__pycache__/
+*.pyc
+*.pyo
+*/.DS_Store
+*/.idea/
+*/.vscode/
+*/__pycache__/
+*/.pytest_cache/

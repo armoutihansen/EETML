@@ -2,7 +2,9 @@ from sklearn.base import BaseEstimator, ClassifierMixin
 from functools import reduce
 import pandas as pd
 from pystata import config
-config.init('se', splash=False)
+import contextlib
+with contextlib.redirect_stdout(None):
+    config.init('se')
 from pystata import stata
 
 class RUM(BaseEstimator, ClassifierMixin):
