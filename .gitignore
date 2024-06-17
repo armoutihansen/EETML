@@ -1,5 +1,4 @@
 Analysis/Data/
-#Analysis/Python/Utils/__pycache__/
 *.pyc
 *.pyo
 */.DS_Store
