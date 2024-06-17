@@ -17,6 +17,12 @@ class RUM(BaseEstimator, ClassifierMixin):
         
         verbose = self.verbose
         _data = pd.concat([y, X], axis=1)
+        _data = pd.wide_to_long(_data,
+                                stubnames=[x for x in X.columns if x not in ['ObsID','sid']],
+                                sep='_',
+                                i=['sid','ObsID'],
+                                j='alt',
+                                suffix='\w+').reset_index()
         _cmd = "clogit " + reduce(lambda x, y: x + ' ' + y if y not in ['ObsID','sid'] else x, _data.columns.to_list()) + ', group(ObsID) vce(cluster sid)'
         stata.pdataframe_to_data(_data, force=True)
         stata.run(_cmd, quietly=verbose)
@@ -27,6 +33,12 @@ class RUM(BaseEstimator, ClassifierMixin):
     def _get_params(self, X: pd.DataFrame, y: pd.Series) -> pd.DataFrame:
         
         _data = pd.concat([y, X], axis=1)
+        _data = pd.wide_to_long(_data,
+                                stubnames=[x for x in X.columns if x not in ['ObsID','sid']],
+                                sep='_',
+                                i=['sid','ObsID'],
+                                j='alt',
+                                suffix='\w+').reset_index()
         stata.pdataframe_to_data(_data, force=True)
         cols = [col for col in X.columns if col not in ['ObsID','sid']]
         temp_cols = ["("+x+": _b["+x+"]/_b[sigma])" for x in X.columns if x not in ['ObsID', 'sid', 'sigma']]
