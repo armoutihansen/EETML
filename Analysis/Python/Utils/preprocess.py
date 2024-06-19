@@ -53,7 +53,7 @@ def _rename(df: pd.DataFrame) -> pd.DataFrame:
     # })
     # df['choice_b'] = 1-df['choice_a']
     df = df.fillna(0)
-    print(df.columns)
+    # print(df.columns)
     return df
 
 def _return_long(df: pd.DataFrame) -> pd.DataFrame:
@@ -89,7 +89,7 @@ def _return_long(df: pd.DataFrame) -> pd.DataFrame:
 
 def _remove_cols(df: pd.DataFrame) -> pd.DataFrame:
   #  print("\tRemoving columns...")
-    df = df[['sid', 'ObsID', 'choice_a', 'choice_b',
+    df = df[['sid', 'ObsID', 'gid', 'choice_a', 'choice_b',
             'lambdaS_a', 'lambdaS_b', 'lambdaD_a', 'lambdaD_b',
             'lambdaA_a', 'lambdaA_b', 'lambdaK_a', 'lambdaK_b',
             'lambdaU_a', 'lambdaU_b', 'sigma_a', 'sigma_b']]
