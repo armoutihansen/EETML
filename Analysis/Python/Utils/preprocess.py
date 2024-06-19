@@ -53,7 +53,7 @@ def _rename(df: pd.DataFrame) -> pd.DataFrame:
     # })
     # df['choice_b'] = 1-df['choice_a']
     df = df.fillna(0)
-
+    print(df.columns)
     return df
 
 def _return_long(df: pd.DataFrame) -> pd.DataFrame:
@@ -86,22 +86,34 @@ def _return_long(df: pd.DataFrame) -> pd.DataFrame:
                             j='alt',
                             suffix='\w+').reset_index()
     return df_long
+
+def _remove_cols(df: pd.DataFrame) -> pd.DataFrame:
+    print("\tRemoving columns...")
+    df = df[['sid', 'ObsID', 'choice_a', 'choice_b',
+            'lambdaS_a', 'lambdaS_b', 'lambdaD_a', 'lambdaD_b',
+            'lambdaA_a', 'lambdaA_b', 'lambdaK_a', 'lambdaK_b',
+            'lambdaU_a', 'lambdaU_b', 'sigma_a', 'sigma_b']]
+    return df
     
-def preprocess(df: pd.DataFrame, test_size=0.2, long=False, shuffle=True, random_state=1) -> tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]:
+def preprocess(df: pd.DataFrame,
+               test_size=0.2,
+               shuffle=True,
+               random_state=1) -> tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]:
     
-    print("Preprocessing dataframe...")
+    # print("Preprocessing dataframe...")
     
     df = _rename(df)
+    df = _remove_cols(df)
     
     train, test = train_test_split(df,
                                 test_size=test_size,
                                 random_state=random_state,
                                 stratify=df['sid'])
-    if long:
-        print("\tCreating long dataframe")
-        df = _return_long(df)
-        train = _return_long(train)
-        test = _return_long(test)
-    print("\tDone!")
+    # if long:
+    #     print("\tCreating long dataframe")
+    #     df = _return_long(df)
+    #     train = _return_long(train)
+    #     test = _return_long(test)
+    # print("\tDone!")
 
     return df, train, test
