@@ -4,7 +4,7 @@ from sklearn.linear_model import LogisticRegression
 from sklearn.model_selection import train_test_split
 
 def _rename(df: pd.DataFrame) -> pd.DataFrame:
-    print("\tRenaming columns...")
+    # print("\tRenaming columns...")
     df = df.rename(columns={
          's_x': 'disadvantage_a',
          's_y': 'disadvantage_b',
@@ -88,7 +88,7 @@ def _return_long(df: pd.DataFrame) -> pd.DataFrame:
     return df_long
 
 def _remove_cols(df: pd.DataFrame) -> pd.DataFrame:
-    print("\tRemoving columns...")
+  #  print("\tRemoving columns...")
     df = df[['sid', 'ObsID', 'choice_a', 'choice_b',
             'lambdaS_a', 'lambdaS_b', 'lambdaD_a', 'lambdaD_b',
             'lambdaA_a', 'lambdaA_b', 'lambdaK_a', 'lambdaK_b',
