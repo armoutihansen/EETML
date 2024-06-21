@@ -17,70 +17,101 @@ class RUM(BaseEstimator, ClassifierMixin):
     def fit(self, X: pd.DataFrame, y: pd.Series) -> BaseEstimator:
         
         quietly = 1 - self.verbose
-      #  y['choice_b'] = 1 - y['choice_a']
         _data = pd.concat([y, X], axis=1)
-        _data = pd.wide_to_long(_data,
-                                stubnames=['choice'] + list(set([x[:-2] for x in X.columns if x not in ['ObsID','sid']])),
-                                sep='_',
-                                i=['sid','ObsID'],
-                                j='alt',
-                                suffix=r'\w+').reset_index()
-        choice_col = _data.pop('choice')
-        _data.insert(0, 'choice', choice_col)
-        print(_data.columns)
-        _data.fillna(0, inplace=True)
+        _data['choice_b'] = 1 - _data['choice_a']
+        reshape_col_str = ' '.join(list(set([x[:-2] for x in _data.columns.to_list() if x not in ['ObsID', 'sid', 'gid']])))
+        stata.pdataframe_to_data(_data, force=True)
+        stata.run("reshape long "+reshape_col_str+", i(ObsID) j(alt) string")
+        _cmd = 'clogit choice ' + reshape_col_str.replace('choice ', '') + ', group(ObsID) vce(cluster gid)'
+        stata.run(_cmd, quietly=False)
+        
+        
+        
         # _data = pd.wide_to_long(_data,
-        #                         stubnames=[x for x in X.columns if x not in ['ObsID','sid']],
+        #                         stubnames=['choice'] + list(set([x[:-2] for x in X.columns if x not in ['ObsID','sid']])),
         #                         sep='_',
         #                         i=['sid','ObsID'],
         #                         j='alt',
         #                         suffix=r'\w+').reset_index()
-        _cmd = "clogit " + reduce(lambda x, y: x + ' ' + y if y not in ['ObsID','sid','alt'] else x, _data.columns.to_list()) + ', group(ObsID) vce(cluster sid)'
-        print(_cmd)
-        stata.pdataframe_to_data(_data, force=True)
-        stata.run(_cmd, quietly=False)
+        # choice_col = _data.pop('choice')
+        # _data.insert(0, 'choice', choice_col)
+        # print(_data.columns)
+        # _data.fillna(0, inplace=True)
+        # # _data = pd.wide_to_long(_data,
+        # #                         stubnames=[x for x in X.columns if x not in ['ObsID','sid']],
+        # #                         sep='_',
+        # #                         i=['sid','ObsID'],
+        # #                         j='alt',
+        # #                         suffix=r'\w+').reset_index()
+        # _cmd = "clogit " + reduce(lambda x, y: x + ' ' + y if y not in ['ObsID','sid','alt'] else x, _data.columns.to_list()) + ', group(ObsID) vce(cluster sid)'
+        # print(_cmd)
+        # stata.pdataframe_to_data(_data, force=True)
+        # stata.run(_cmd, quietly=False)
         self.coef_ = self._get_params(X, y)
         
         return self
 
     def _get_params(self, X: pd.DataFrame, y: pd.Series) -> pd.DataFrame:
         
-      #  y['choice_b'] = 1 - y['choice_a']
-        _data = pd.concat([y, X], axis=1)
         quietly = 1 - self.verbose
-        _data = pd.wide_to_long(_data,
-                                stubnames=['choice'] + list(set([x[:-2] for x in X.columns if x not in ['ObsID','sid']])),
-                                sep='_',
-                                i=['sid','ObsID'],
-                                j='alt',
-                                suffix=r'\w+').reset_index()
-        choice_col = _data.pop('choice')
-        _data.insert(0, 'choice', choice_col)
-        _data.fillna(0, inplace=True)
-        # _data = pd.wide_to_long(_data,
-        #                         stubnames=[x for x in X.columns if x not in ['ObsID','sid']],
-        #                         sep='_',
-        #                         i=['sid','ObsID'],
-        #                         j='alt',
-        #                         suffix=r'\w+').reset_index()
+        _data = pd.concat([y, X], axis=1)
+        _data['choice_b'] = 1 - _data['choice_a']
+        reshape_col_str = ' '.join(list(set([x[:-2] for x in _data.columns.to_list() if x not in ['ObsID', 'sid', 'gid']])))
         stata.pdataframe_to_data(_data, force=True)
-        cols = [col for col in X.columns if col not in ['ObsID','sid']]
-        temp_cols = ["("+x+": _b["+x+"]/_b[sigma])" for x in X.columns if x not in ['ObsID', 'sid', 'sigma']]
-        _cmd = "nlcom (sigma:_b[sigma])"+reduce(lambda x, y: x+y, temp_cols)
+        stata.run("reshape long "+reshape_col_str+", i(ObsID) j(alt) string")
+        _cmd = "nlcom (sigma: _b[sigma])" + " ".join(["("+x+": _b["+x+"]/_b[sigma])" for x in reshape_col_str.replace('choice ', '').replace('sigma ', '').split(' ')])
         stata.run(_cmd, quietly=quietly)
-        # stat_ret = stata.get_return()
-        # coefs = stat_ret['r(b)'][0]
-        # se = np.sqrt(np.diag(stat_ret['r(V)']))
+        stat_ret = stata.get_return()
+        coefs = stat_ret['r(b)'][0]
+        se = np.sqrt(np.diag(stat_ret['r(V)']))
         
-        # return pd.DataFrame([coefs, se], columns=cols, index=['coefs', 'se'])
-        return stata.get_return()
+        return pd.DataFrame([coefs, se], columns=['sigma'] + reshape_col_str.replace('choice ', '').replace('sigma ', '').split(' '), index=['coefs', 'se'])
+        
+        
+    #   #  y['choice_b'] = 1 - y['choice_a']
+    #     _data = pd.concat([y, X], axis=1)
+    #     quietly = 1 - self.verbose
+    #     _data = pd.wide_to_long(_data,
+    #                             stubnames=['choice'] + list(set([x[:-2] for x in X.columns if x not in ['ObsID','sid']])),
+    #                             sep='_',
+    #                             i=['sid','ObsID'],
+    #                             j='alt',
+    #                             suffix=r'\w+').reset_index()
+    #     choice_col = _data.pop('choice')
+    #     _data.insert(0, 'choice', choice_col)
+    #     _data.fillna(0, inplace=True)
+    #     # _data = pd.wide_to_long(_data,
+    #     #                         stubnames=[x for x in X.columns if x not in ['ObsID','sid']],
+    #     #                         sep='_',
+    #     #                         i=['sid','ObsID'],
+    #     #                         j='alt',
+    #     #                         suffix=r'\w+').reset_index()
+    #     stata.pdataframe_to_data(_data, force=True)
+    #     cols = [col for col in X.columns if col not in ['ObsID','sid']]
+    #     temp_cols = ["("+x+": _b["+x+"]/_b[sigma])" for x in X.columns if x not in ['ObsID', 'sid', 'sigma']]
+    #     _cmd = "nlcom (sigma:_b[sigma])"+reduce(lambda x, y: x+y, temp_cols)
+    #     stata.run(_cmd, quietly=quietly)
+    #     # stat_ret = stata.get_return()
+    #     # coefs = stat_ret['r(b)'][0]
+    #     # se = np.sqrt(np.diag(stat_ret['r(V)']))
+        
+    #     # return pd.DataFrame([coefs, se], columns=cols, index=['coefs', 'se'])
+    #     return stata.get_return()
     
     def predict_proba(self, X: pd.DataFrame) -> pd.Series:
         
-        _data = X
-        stata.pdataframe_to_data(_data, force=True)
+        reshape_col_str = ' '.join(sorted(list(set([x[:-2] for x in X.columns.to_list() if x not in ['ObsID', 'sid', 'gid', 'choice']]))))
+        stata.pdataframe_to_data(X, force=True)
+        stata.run("reshape long "+reshape_col_str+", i(ObsID) j(alt) string")
         stata.run("predict p, pc1")
-        proba = stata.pdataframe_from_data(selectvar=-1)["p"]
+        stata.run("reshape wide "+reshape_col_str+" p, i(ObsID) j(alt) string")
+        proba = stata.pdataframe_from_data()["p_a"]
+        proba.index = X.index
+        
+        # _data = X
+        # stata.pdataframe_to_data(_data, force=True)
+        # stata.run("predict p, pc1")
+        # proba = stata.pdataframe_from_data(selectvar=-1)["p"]
         
         return proba
     
